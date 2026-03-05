@@ -3,20 +3,26 @@ from PIL import Image
 import io
 import zipfile
 
-st.set_page_config(page_title="Pro Image Compressor", page_icon="🖼️", layout="wide")
-
-st.title("🖼️ Pro Image Compressor")
-st.write("Upload multiple images and compress them instantly.")
-
-uploaded_files = st.file_uploader(
-    "Drag and Drop Images",
-    type=["jpg", "jpeg", "png", "webp"],
-    accept_multiple_files=True
+st.set_page_config(
+    page_title="Free Image Compressor",
+    page_icon="⚡",
+    layout="wide"
 )
 
-st.sidebar.header("Compression Settings")
+st.title("Free Image Compressor")
+st.markdown("Compress JPG, PNG, and WEBP images **without losing quality**.")
 
-quality = st.sidebar.slider("Compression Quality", 10, 100, 70)
+st.divider()
+
+# Sidebar settings
+st.sidebar.title("⚙ Compression Settings")
+
+quality = st.sidebar.slider(
+    "Compression Quality",
+    min_value=10,
+    max_value=100,
+    value=70
+)
 
 format_option = st.sidebar.selectbox(
     "Output Format",
@@ -29,16 +35,32 @@ if resize_option:
     width = st.sidebar.number_input("Width", value=800)
     height = st.sidebar.number_input("Height", value=800)
 
+st.sidebar.markdown("---")
+st.sidebar.write("Upload images and download compressed versions.")
+
+# Upload section
+st.subheader("📤 Upload Images")
+
+uploaded_files = st.file_uploader(
+    "Drag & Drop or Select Images",
+    type=["jpg", "jpeg", "png", "webp"],
+    accept_multiple_files=True
+)
+
 compressed_files = []
 zip_buffer = io.BytesIO()
 
 if uploaded_files:
 
-    for file in uploaded_files:
+    progress_bar = st.progress(0)
+
+    for i, file in enumerate(uploaded_files):
 
         image = Image.open(file)
 
         original_size = file.size / 1024
+
+        original_preview = image.copy()
 
         if resize_option:
             image = image.resize((int(width), int(height)))
@@ -56,26 +78,33 @@ if uploaded_files:
 
         reduction = ((original_size - compressed_size) / original_size) * 100
 
-        col1, col2 = st.columns(2)
+        st.markdown("---")
+
+        col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.image(image, caption="Compressed Preview", width=300)
+            st.image(original_preview, caption="Original Image", use_column_width=True)
 
         with col2:
-            st.write(f"Original Size: {original_size:.2f} KB")
-            st.write(f"Compressed Size: {compressed_size:.2f} KB")
-            st.write(f"Reduction: {reduction:.2f}%")
+            st.image(img_bytes, caption="Compressed Image", use_column_width=True)
 
-        filename = f"compressed_{file.name}"
+        with col3:
+            st.write(f"📦 Original Size: **{original_size:.2f} KB**")
+            st.write(f"📉 Compressed Size: **{compressed_size:.2f} KB**")
+            st.write(f"⚡ Reduction: **{reduction:.2f}%**")
 
-        st.download_button(
-            label=f"Download {filename}",
-            data=img_bytes,
-            file_name=filename,
-            mime=f"image/{format_option.lower()}"
-        )
+            filename = f"compressed_{file.name}"
+
+            st.download_button(
+                label="⬇ Download Image",
+                data=img_bytes,
+                file_name=filename,
+                mime=f"image/{format_option.lower()}"
+            )
 
         compressed_files.append((filename, img_bytes.getvalue()))
+
+        progress_bar.progress((i + 1) / len(uploaded_files))
 
     with zipfile.ZipFile(zip_buffer, "w") as zipf:
         for name, data in compressed_files:
@@ -83,8 +112,10 @@ if uploaded_files:
 
     zip_buffer.seek(0)
 
+    st.markdown("### 📦 Download All Images")
+
     st.download_button(
-        label="⬇ Download All Images (ZIP)",
+        label="⬇ Download ZIP",
         data=zip_buffer,
         file_name="compressed_images.zip",
         mime="application/zip"
