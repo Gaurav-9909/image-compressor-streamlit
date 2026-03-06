@@ -3,18 +3,35 @@ from PIL import Image
 import io
 import zipfile
 
+# Page Config
 st.set_page_config(
     page_title="Free Image Compressor",
     page_icon="⚡",
     layout="wide"
 )
 
-st.title("Free Image Compressor")
-st.markdown("Compress JPG, PNG, and WEBP images **without losing quality**.")
+# Hide Streamlit Branding
+hide_streamlit_style = """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# Header
+st.title("⚡ Free Image Compressor")
+
+st.markdown("""
+Compress **JPG, PNG, and WEBP images instantly** without losing quality.
+
+**Fast • Secure • Free**  
+""")
 
 st.divider()
 
-# Sidebar settings
+# Sidebar
 st.sidebar.title("⚙ Compression Settings")
 
 quality = st.sidebar.slider(
@@ -36,9 +53,14 @@ if resize_option:
     height = st.sidebar.number_input("Height", value=800)
 
 st.sidebar.markdown("---")
-st.sidebar.write("Upload images and download compressed versions.")
 
-# Upload section
+# Sidebar Branding
+st.sidebar.markdown("### 👨‍💻 Developer")
+st.sidebar.markdown("**Gaurav Jangra**")
+st.sidebar.markdown("🚀 Free Image Compression Tool")
+
+
+# Upload Section
 st.subheader("📤 Upload Images")
 
 uploaded_files = st.file_uploader(
@@ -59,7 +81,6 @@ if uploaded_files:
         image = Image.open(file)
 
         original_size = file.size / 1024
-
         original_preview = image.copy()
 
         if resize_option:
@@ -71,11 +92,9 @@ if uploaded_files:
             image = image.convert("RGB")
 
         image.save(img_bytes, format=format_option, quality=quality)
-
         img_bytes.seek(0)
 
         compressed_size = len(img_bytes.getvalue()) / 1024
-
         reduction = ((original_size - compressed_size) / original_size) * 100
 
         st.markdown("---")
@@ -106,6 +125,7 @@ if uploaded_files:
 
         progress_bar.progress((i + 1) / len(uploaded_files))
 
+    # ZIP download
     with zipfile.ZipFile(zip_buffer, "w") as zipf:
         for name, data in compressed_files:
             zipf.writestr(name, data)
@@ -120,3 +140,15 @@ if uploaded_files:
         file_name="compressed_images.zip",
         mime="application/zip"
     )
+
+# Footer Branding
+st.markdown("---")
+
+st.markdown(
+"""
+<div style="text-align:center; padding:10px; font-size:14px;">
+Made with ❤️ by <b>Gaurav Jangra</b><br>
+</div>
+""",
+unsafe_allow_html=True
+)
